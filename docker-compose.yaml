@@ -1,0 +1,47 @@
+version: "3"
+
+services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+    depends_on:
+      - app
+    command: /bin/sh -c "exec nginx -g 'daemon off;'"
+    networks:
+      - docker_net
+
+  app:
+    build:
+      context: node
+    container_name: app
+    entrypoint: dockerize -wait tcp://db:3306 -timeout 60s docker-entrypoint.sh
+    volumes:
+      - ./node:/usr/src/app
+    tty: true
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    networks:
+      - docker_net
+
+  db:
+    image: mysql:5.7
+    command: --innodb-use-native-aio=0
+    container_name: db
+    restart: always
+    tty: true
+    volumes:
+      - ./mysql:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=nodedb
+      - MYSQL_ROOT_PASSWORD=root
+    networks:
+      - docker_net
+
+networks:
+  docker_net:
