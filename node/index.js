@@ -2,23 +2,50 @@ const express = require("express");
 const app = express();
 const port = 3000;
 const config = {
-  host: "localhost",
+  host: "db",
   user: "root",
   password: "root",
   database: "nodedb",
 };
-const msyql = require("mysql");
-const connection = msyql.createConnection(config);
+const mysql = require("mysql");
+const connection = mysql.createConnection(config);
 
-app.get("/", (req, res) => {
-  connection.query("SELECT * FROM people", (error, results) => {
-    if (error) throw error;
+connection.connect((err) => {
+  if (err) {
+    console.error("Erro ao conectar ao banco de dados:", err);
+  } else {
+    console.log("Conectado ao banco de dados");
 
-    let names = results.map((result) => result.name);
-    res.send(`<h1>Full Cycle Rocks!</h1>\n\n${names.join("\n")}`);
+    const createTableQuery = `
+      CREATE TABLE IF NOT EXISTS people (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL
+      )
+    `;
+
+    connection.query(createTableQuery, (error) => {
+      if (error) {
+        console.error("Erro ao criar a tabela:", error);
+      } else {
+        console.log("Tabela criada com sucesso");
+        startServer();
+      }
+    });
+  }
+});
+
+function startServer() {
+  // Inicia o servidor Express
+  app.get("/", (req, res) => {
+    connection.query("SELECT * FROM people", (error, results) => {
+      if (error) throw error;
+
+      let names = results.map((result) => result.name);
+      res.send(`<h1>Full Cycle Rocks!</h1>\n\n${names.join("\n")}`);
+    });
   });
-});
 
-app.listen(port, () => {
-  console.log("Rodaando na porta " + port);
-});
+  app.listen(port, () => {
+    console.log("Rodando na porta " + port);
+  });
+}
