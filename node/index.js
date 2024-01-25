@@ -37,11 +37,20 @@ connection.connect((err) => {
 function startServer() {
   // Inicia o servidor Express
   app.get("/", (req, res) => {
-    connection.query("SELECT * FROM people", (error, results) => {
-      if (error) throw error;
+    const daniel = "INSERT INTO people (name) VALUES ('Daniel ')";
 
-      let names = results.map((result) => result.name);
-      res.send(`<h1>Full Cycle Rocks!</h1>\n\n${names.join("\n")}`);
+    connection.query(daniel, (error) => {
+      if (error) {
+        console.error("Erro ao inserir registro:", error);
+        res.status(500).send("Erro ao inserir registro no banco de dados");
+      } else {
+        connection.query("SELECT * FROM people", (error, results) => {
+          if (error) throw error;
+
+          let names = results.map((result) => result.name);
+          res.send(`<h1>Full Cycle Rocks!</h1>\n\n${names.join("\n")}`);
+        });
+      }
     });
   });
 
